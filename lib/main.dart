@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'services/db_service.dart';
 import 'services/sms_service.dart';
 import 'models/parsed_sms.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 
@@ -22,6 +24,7 @@ class SmsListScreen extends StatefulWidget {
 
 class _SmsListScreenState extends State<SmsListScreen> {
   final SmsService _smsService = SmsService();
+  final DatabaseService _dbService = DatabaseService();
   List<ParsedSMS> _bankMessages = [];
   bool _isLoading = true;
 
@@ -31,19 +34,23 @@ class _SmsListScreenState extends State<SmsListScreen> {
     _loadBankMessages();
   }
 
-  /// Function to fetch bank messages
+  /// Function to fetch and save bank messages
   Future<void> _loadBankMessages() async {
     setState(() {
       _isLoading = true; // Show loading indicator
     });
+
     try {
       List<ParsedSMS> messages = await _smsService.fetchBankMessages();
+      for (final message in messages) {
+        await _dbService.saveMessageToJson(message); // Save each message to JSON
+      }
       setState(() {
         _bankMessages = messages;
         _isLoading = false; // Stop loading
       });
     } catch (e) {
-      print("Error fetching bank messages: $e");
+      print("Error fetching or saving bank messages: $e");
       setState(() {
         _isLoading = false; // Stop loading even on error
       });
