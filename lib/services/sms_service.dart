@@ -7,22 +7,17 @@ class SmsService {
   final SmsQuery _smsQuery = SmsQuery();
 
   Future<List<ParsedSMS>> fetchBankMessages() async {
-    // Check SMS permission
     if (await Permission.sms.request().isGranted) {
       try {
-        // Fetch SMS messages from the inbox
         List<SmsMessage> messages = await _smsQuery.querySms();
         List<ParsedSMS> bankMessages = [];
 
         for (var message in messages) {
           if (message.body != null) {
-            print("Raw SMS: ${message.body}"); // Debug raw SMS content
-
-            // Use the unified parser to handle SMS parsing
+            print("Raw SMS: ${message.body}");
             ParsedSMS? parsed = parseSMS(message.body!);
-
             if (parsed != null) {
-              print("Parsed SMS: $parsed"); // Debug parsed content
+              print("Parsed SMS: $parsed");
               bankMessages.add(parsed);
             } else {
               print("Message not parsed: ${message.body}");
@@ -36,7 +31,6 @@ class SmsService {
         throw Exception("Failed to fetch or parse SMS messages");
       }
     } else {
-      // Throw an error if permission is denied
       throw Exception("SMS Permission Denied");
     }
   }
