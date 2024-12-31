@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'services/db_service.dart';
+import 'services/api_service.dart';
 import 'services/sms_service.dart';
 import 'models/parsed_sms.dart';
 
@@ -24,7 +24,7 @@ class SmsListScreen extends StatefulWidget {
 
 class _SmsListScreenState extends State<SmsListScreen> {
   final SmsService _smsService = SmsService();
-  final DatabaseService _dbService = DatabaseService();
+  final ApiService _apiService = ApiService();
   List<ParsedSMS> _bankMessages = [];
   bool _isLoading = true;
 
@@ -41,12 +41,17 @@ class _SmsListScreenState extends State<SmsListScreen> {
     });
 
     try {
+      // Fetch SMS messages
       List<ParsedSMS> messages = await _smsService.fetchBankMessages();
-      for (final message in messages) {
-        await _dbService.saveMessageToJson(message); // Save each message to JSON
-      }
+
+      // Push messages to backend
+      await _apiService.postMessages(messages);
+
+      // Fetch updated messages from the backend
+      List<ParsedSMS> updatedMessages = await _apiService.fetchMessages();
+
       setState(() {
-        _bankMessages = messages;
+        _bankMessages = updatedMessages;
         _isLoading = false; // Stop loading
       });
     } catch (e) {
